@@ -1,0 +1,15 @@
+---
+  - name:  Rilascio Noah
+    hosts: webservers
+    sudo: True
+      vars_files:
+        - vars.yml
+
+    tasks:
+      - name: Backup docroot Noah prod
+        command: /bin/cp -ra /var/www/noah.banzaimedia.it/ /var/www/noah.banzaimedia.it_bkp
+
+      - name: Copy new file in prod
+      synchronize: src="{{ source_noah }}" dest=/var/www/noah.banzaimedia.it/
+
+        #synchronize: src=doc_root/ dest=/var/www/noah.banzaimedia.it/

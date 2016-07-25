@@ -1,0 +1,125 @@
+---
+
+- hosts: '{{ hosts }}'
+
+- name: Deploy vhost & php conf
+  hosts: 127.0.0.1
+  tasks:
+    - name: Git Clone Repo Configs in tmp dir
+      local_action: git repo=https://git.banzaimedia.it/sistemi/configs.git  dest=../tmp/configs
+
+- name: Backup conf etc prod and reload services
+  #hosts: {{ farm }}
+  #vars:
+  #  - farm: "{{ repo_dir }}/my_hosts"
+  #  - my_host: ../inventory/hosts
+  #vars:
+    #host_farm: "{{ HOST|default(farm) }}"
+  #  - farm: prova
+  vars_files:
+    - "{{ myvarfile }}"
+  #vars_files:
+    - ../vars/vars.yml
+    - ../inventory/hosts
+    - ../tmp/configs
+    - ../handler/main.yml
+  sudo: True
+
+  tasks:
+    - name: Backup conf etc prod
+      shell: /bin/cp -ra /etc /etc_bkp
+
+    - name: Deploy configs Farm Prod in etc
+      #synchronize: src={{ repo_dir }}/{{ farm }} dest=/etc/
+      synchronize: src={{ myvarfile }} dest=/etc/
+#    - name: check if apache is running then reload
+#      when: "{{ farm }}'apache' in group_names"
+#      when: {{ farm }} not in groups['nginx']
+#      notify: reload apache2
+
+#    - name: check if nginx is running then reload
+#      when: "{{ farm }}'nginx' in group_names"
+#      service: name=nginx state=reloaded
+
+#      pause: seconds=45
+
+#    - name: reload php-fpm
+#      service: name=php-fpm state=reloaded
+
+#### Gestire if then else service active apache #####
+
+#    - name: Check nginx service
+#      local_action: ansible {{farm}} -m service -a "name=nginx state=started"
+
+#    - name: make sure apache is running
+#      service: name=httpd state=running
+
+#    - name: make sure nginx is running
+#      service: name=nginx state=running
+
+#- name: ensure apache is running (and enable it at boot)
+  #service: name=httpd state=started enabled=yes
+  #handlers:
+  #  - name: restart apache
+  #    service: name=httpd state=restarted
+
+#### Gestire if then else service active nginx #####
+
+#- name: ensure nginx is running (and enable it at boot)
+  #service: name=nginx state=started enabled=yes
+  #handlers:
+  #  - name: reload nginx
+  #    service: name=nginx state=reloaded
+
+#    - name: run this command and ignore the result   #impostare if then else
+#      shell: /etc/init.d/apache2 status || /bin/true
+
+#    - name: run this command and ignore the result
+#      shell: /etc/init.d/nginx status || /bin/true
+
+#ansible-playbook -i hosts deploy.yml --extra-vars '{"farm": ["adv", "blogs"]}'
+#ansible-playbook -c local -i localhost, test.yml --extra-vars='{test_list: [1,2,3]}'
+#ansible-playbook "-e 'farm=webservers'" deploy.yml
+#ansible-playbook -i hosts deploy.yml --extra-vars '{"farm": ["webservers"]}'
+
+#ansible-playbook deploy.yml --extra-vars "farm=argo" OKKKK
+#ansible -i hosts webservers deploy.yml --extra-vars="farm=../tmp/configs/webservers"
+
+###{% if 'apache' in group_names %}
+   # some part of a configuration file that only applies to webservers
+   #service: name=apache2 state=reloaded
+###{% endif %}
+
+###{% for host in groups['apache'] %}
+   # something that applies to all app servers.
+   #service: name=apache2 state=reloaded
+###{% endfor %}
+
+#- name: ensure apache is running
+#    service:
+#      name: httpd
+#      state: started
+#  handlers:
+#    - name: restart apache
+#      service:
+#        name: httpd
+#        state: restarted
+
+#- name: make sure apache is running
+#  when:
+#      service: name={{ apache }} state=running
+
+#tasks:
+#  - command: /bin/ap
+#    register: result
+#    ignore_errors: True
+#  - command: /bin/something
+#    when: result|failed
+#  - command: /bin/something_else
+#    when: result|success
+#  - command: /bin/still/something_else
+#    when: result|skipped
+
+
+######OOOOKKKKKKKKKKKKKK########
+###ansible-playbook deploy.yml --extra-vars "hosts_var=webservers farm=webservers"

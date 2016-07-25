@@ -1,0 +1,30 @@
+---
+#- name: Git Clone
+#  hosts: 127.0.0.1
+#  vars_files:
+#    - ../vars/vars.yml
+#  tasks:
+#    - name: Git Clone Configs repo
+#      local_action: git repo=https://git.banzaimedia.it/sistemi/configs.git  dest=../tmp/configs
+
+- name: Deploy vhost & php conf
+  hosts: '{{ hosts_var }}'
+  vars_files:
+    - ../vars/vars.yml
+  gather_facts: True
+  sudo: True
+  tasks:
+    - name: Backup conf etc prod and reload services
+      shell: /bin/cp -ra /etc /etc_bkp
+
+    - name: Deploy configs Farm Prod in etc
+      #synchronize: src={{ repo_dir }}/{{ farm }}/ dest=/etc/
+      copy: src={{ repo_dir }}/{{ farm }}/ dest=/etc/ backup=yes
+
+    - name: check if nginx is running then reload
+      when: "'{{ hosts_var }}''nginx' in group_names"
+      service: name=nginx state=reloaded
+
+    - name: check if php-fpm-5.4 is running then reload
+      when: "'{{ hosts_var }}''php-fpm-5.4' in group_names"
+      service: name=php-fpm-5.4 state=reloaded
